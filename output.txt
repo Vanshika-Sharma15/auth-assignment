@@ -1,0 +1,42 @@
+# ----------------------------------------
+# Step 1: Login
+# ----------------------------------------
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $loginResponse = Invoke-RestMethod -Uri http://localhost:3000/auth/login -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"email":"test@example.com","password":"password123"}'
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $loginResponse
+
+message  loginSessionId
+-------  --------------
+OTP sent eq82ad
+
+# Note: OTP is also logged in server console like:
+# [OTP] Session eq82ad generated: 446898
+
+# ----------------------------------------
+# Step 2: Verify OTP
+# ----------------------------------------
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $body = @{ loginSessionId="eq82ad"; otp="446898" } | ConvertTo-Json
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> Invoke-RestMethod -Uri http://localhost:3000/auth/verify-otp -Method POST -Body $body -ContentType "application/json" -SessionVariable session
+
+message        sessionId
+-------        ---------
+OTP verified   eq82ad
+
+# ----------------------------------------
+# Step 3: Generate JWT Token
+# ----------------------------------------
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $tokenResponse = Invoke-RestMethod -Uri http://localhost:3000/auth/token -Method POST -WebSession $session
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $tokenResponse
+
+access_token
+------------
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJzZXNzaW9uSWQiOiJlcTgyYWQiLCJpYXQiOjE3NzA5OTYzMTgsImV4cCI6MTc3MDk5NzIxOH0.utINuSWl...
+
+# ----------------------------------------
+# Step 4: Access Protected Route
+# ----------------------------------------
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> $jwt = $tokenResponse.access_token
+PS C:\Users\DELL\OneDrive\Desktop\Assignment> Invoke-RestMethod -Uri http://localhost:3000/protected -Method GET -Headers @{ Authorization = "Bearer $jwt" }
+
+message        user                                                                        success_flag
+-------        ----                                                                        ------------
+Access granted @{email=test@example.com; sessionId=eq82ad; iat=1770996318; exp=1770997218} FLAG-dGVzdEBleGFtcGxlLmNvbV9DT01QTEVURURfQVNTSUdOTUVOVA==
