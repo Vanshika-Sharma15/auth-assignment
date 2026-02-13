@@ -1,42 +1,56 @@
-# ----------------------------------------
-# Step 1: Login
-# ----------------------------------------
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $loginResponse = Invoke-RestMethod -Uri http://localhost:3000/auth/login -Method POST -Headers @{"Content-Type"="application/json"} -Body '{"email":"test@example.com","password":"password123"}'
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $loginResponse
+# Task 1: Login
+curl -Method POST http://localhost:3000/auth/login `
+-Headers @{"Content-Type"="application/json"} `
+-Body '{"email":"vanshikasharma.tech@gmail.com","password":"password123"}'
 
-message  loginSessionId
--------  --------------
-OTP sent eq82ad
+Response:
+{"message":"OTP sent","loginSessionId":"grbueo"}
 
-# Note: OTP is also logged in server console like:
-# [OTP] Session eq82ad generated: 446898
+Server Logs:
+Server running at http://localhost:3000
+POST /auth/login
+[OTP] Session grbueo generated: 419016
+POST /auth/login -> 200 (26ms)
 
-# ----------------------------------------
-# Step 2: Verify OTP
-# ----------------------------------------
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $body = @{ loginSessionId="eq82ad"; otp="446898" } | ConvertTo-Json
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> Invoke-RestMethod -Uri http://localhost:3000/auth/verify-otp -Method POST -Body $body -ContentType "application/json" -SessionVariable session
+---
 
-message        sessionId
--------        ---------
-OTP verified   eq82ad
+# Task 2: Verify OTP
+curl -Method POST http://localhost:3000/auth/verify-otp `
+-Headers @{"Content-Type"="application/json"} `
+-Body '{"loginSessionId":"grbueo","otp":"419016"}' `
+-SessionVariable session
 
-# ----------------------------------------
-# Step 3: Generate JWT Token
-# ----------------------------------------
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $tokenResponse = Invoke-RestMethod -Uri http://localhost:3000/auth/token -Method POST -WebSession $session
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $tokenResponse
+Response:
+{"message":"OTP verified","sessionId":"grbueo"}
 
+Server Logs:
+POST /auth/verify-otp
+POST /auth/verify-otp -> 200 (3ms)
+
+---
+
+# Task 3: Get Token
+$tokenResponse = Invoke-RestMethod -Uri http://localhost:3000/auth/token -Method POST -WebSession $session
+
+Response:
 access_token
 ------------
-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJzZXNzaW9uSWQiOiJlcTgyYWQiLCJpYXQiOjE3NzA5OTYzMTgsImV4cCI6MTc3MDk5NzIxOH0.utINuSWl...
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InZhbnNoaWthc2hhcm1hLnRlY2hAZ21haWwuY29tIiwic2Vzc2lvbklkIjoiZ3JidWVvIiwiaWF0IjoxNzcwOTk4NDg2LCJleHAiOjE3NzA5OTkzODY...
 
-# ----------------------------------------
-# Step 4: Access Protected Route
-# ----------------------------------------
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> $jwt = $tokenResponse.access_token
-PS C:\Users\DELL\OneDrive\Desktop\Assignment> Invoke-RestMethod -Uri http://localhost:3000/protected -Method GET -Headers @{ Authorization = "Bearer $jwt" }
+Server Logs:
+POST /auth/token
+POST /auth/token -> 200 (8ms)
 
-message        user                                                                        success_flag
--------        ----                                                                        ------------
-Access granted @{email=test@example.com; sessionId=eq82ad; iat=1770996318; exp=1770997218} FLAG-dGVzdEBleGFtcGxlLmNvbV9DT01QTEVURURfQVNTSUdOTUVOVA==
+---
+
+# Task 4: Access Protected Route
+Invoke-RestMethod -Uri http://localhost:3000/protected -Method GET -Headers @{ Authorization = "Bearer $jwt" }
+
+Response:
+message        user                                                                                     success_flag
+-------        ----                                                                                     ------------
+Access granted @{email=vanshikasharma.tech@gmail.com; sessionId=grbueo; iat=1770998486; exp=1770999386} FLAG-dmFuc2hpa2FzaGFybWEudGVjaEBnbWFpbC5jb21fQ09NUExFVEVEX0FTU0lHTk1FTlQ=
+
+Server Logs:
+GET /protected
+GET /protected -> 200 (3ms)
